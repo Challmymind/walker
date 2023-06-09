@@ -27,10 +27,15 @@ namespace walker {
 		 * */
 		bool interact;
 
-		/* Special flags.
-		 * [0]: if 1 close app.
+		/* Command accumulator.
+		 * Stores latest command.
 		 * */
-		std::uint_fast8_t special[1];
+		char command[5];
+
+		/* Command flag.
+		 * Processes command in accumulator if true.
+		 * */
+		bool fcommand;
 
 	};
 	
@@ -73,6 +78,10 @@ namespace walker {
 			 * */
 			std::uint_least16_t poll_error();
 
+			/* Ensures all threads has stopped.
+			 * */
+			~Game();
+
 			// Enables creation of game by launcher.
 			friend Launcher;
 				
@@ -102,7 +111,7 @@ namespace walker {
 			// Poll thread.
 			std::thread _poll_thread;
 
-			// Input struct.
+			// GUARDED input struct.
 			struct INPUT_RECORD _g_input_record;
 
 	};

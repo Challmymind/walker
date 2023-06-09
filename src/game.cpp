@@ -12,10 +12,32 @@ namespace walker {
 		// Lock mutex.
 		_m_wi.lock();
 
-		// HERE STATE UPDATE like
-		if (_g_input_record.special[0]) _should_run = false;
+		// Procces command if needed.
+		if (_g_input_record.fcommand) {
+			
+			// End command : sends close signal.
+			if (std::strcmp(_g_input_record.command, "end") == 0) {
 
-		std::cout << "Polled: " << _g_input_record.move << std::endl;
+				// Stop main loop.
+				_should_run = false;
+
+				// Stop polling input.
+				stop_poll_input();
+			}
+
+			// Reset command buffer.
+			for (std::uint_fast8_t i = 0; i < 5; i++) _g_input_record.command[i] = 0;
+
+			// Unset command flag.
+			_g_input_record.fcommand = false;
+		}
+
+		// HERE STATE UPDATE
+
+		// Print current typed command.
+		std::cout << "Current command: ";
+		for (std::uint_fast8_t i = 0; i < 5; i++) std::cout << _g_input_record.command[i];
+		std::cout << std::endl;
 
 		// Unlock mutex.
 		_m_wi.unlock();
@@ -46,8 +68,6 @@ namespace walker {
 
 	void Game::stop_poll_input() {
 		
-		// WIP Add checks for file existance.
-		
 		// Lock mutex.
 		_m_ip.lock();
 
@@ -56,9 +76,14 @@ namespace walker {
 		// Unlock mutex.
 		_m_ip.unlock();
 
+		
+	}
+
+	Game::~Game() {
+		
 		// Wait for thread to stop.
 		_poll_thread.join();
-		
+
 	}
 
 	void Game::__poll_input(){
@@ -75,7 +100,7 @@ namespace walker {
 
 				// Unlock mutex.
 				_m_ip.unlock();
-				break;
+				return;
 			}
 
 			// Unlock mutex.
@@ -87,7 +112,6 @@ namespace walker {
 			// Enter command mode.
 			if (symbol == '/') {
 
-				char command[5] = {0,0,0,0,0};
 				std::uint8_t com_iteration = 0;
 				// Process input.
 				while (true) {
@@ -99,26 +123,47 @@ namespace walker {
 					symbol = std::getchar();
 
 					// Check for end of command.
-					if (symbol == 10) break;
+					if (symbol == '\n') break;
+
+					// Lock mutex.
+					_m_wi.lock();
 
 					// Check if it is control character.
-					if(!std::iscntrl(symbol)) command[com_iteration] = symbol;
+					if(!std::iscntrl(symbol)) _g_input_record.command[com_iteration] = symbol;
+					
+					// Unlock mutex.
+					_m_wi.unlock();
 
 					// Increase iteration.
 					com_iteration++;
 
 				}
+				// Lock mutex.
+				_m_wi.lock();
 
-				if (std::strcmp(command, "end") == 0) {
+				// Set command flag.
+				_g_input_record.fcommand = true;
+				
+				// Unlock mutex.
+				_m_wi.unlock();
 
-					// Lock mutex.
-					_m_wi.lock();
+				while (true) {
+					
+					// Lock if possible.
+					if (_m_wi.try_lock()) {
+						
+						if (!_g_input_record.fcommand) {
 
-					// Request application close.
-					_g_input_record.special[0] = 1;
+							// Unlock lock.
+							_m_wi.unlock();
+							break;
 
-					// Unlock mutex.
-					_m_wi.unlock();
+						}
+
+						// Unlock lock.
+						_m_wi.unlock();
+					}
+
 				}
 
 				continue;
@@ -143,6 +188,8 @@ namespace walker {
 					break;
 				case 'e':
 					_g_input_record.interact = true;
+					break;
+				default:
 					break;
 
 			}
