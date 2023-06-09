@@ -2,13 +2,12 @@
 #define __WALKER_GMAP__
 
 #include <cstdint>
-#include <memory>
 
 namespace walker {
 	
 	/* Stores map and can be passed to the game.
 	 * */
-	class Map {
+	class Gmap {
 
 		public:
 
@@ -18,14 +17,33 @@ namespace walker {
 			 *
 			 * @return true if the map has been loaded.
 			 * */
-			Map(const char* path, std::uint_fast8_t dimension);
+			Gmap(const char* path, std::uint_fast8_t dimension);
+
+			/* Loaded map dimension.
+			 */
+			const std::uint_fast8_t dimension;
+
+			/* Checks if any error occured.
+			 *
+			 * Created for tests, to catch bugs.
+			 *
+			 * @return status of _map_loaded flag.
+			 * */
+			bool is_ok() const;
+
+			/* Deconstructor.
+			 *
+			 * Constains deallocation of dynamic memory.
+			 * */
+			~Gmap();
 
 		private:
 
 			// Flag that indicates that map has been loaded without error.
 			bool _map_loaded = false;
 
-			std::unique_ptr<char[]> _map_pointer;
+			// Pointer to loaded data.
+			char ** _map_pointer;
 
 	};
 }

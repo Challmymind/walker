@@ -6,6 +6,10 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS On)
 # All targets need this directory.
 include_directories(inc)
 
+# Add lining commands
+add_compile_options(-pthread)
+add_link_options(-lpthread)
+
 # Tests subdirectory.
 add_subdirectory(tests build_test)
 

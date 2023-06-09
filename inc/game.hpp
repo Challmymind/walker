@@ -2,46 +2,35 @@
 #define __WALKER_GAME__
 
 #include <cstdint>
+#include <mutex>
 #include <gmap.hpp>
+#include <launcher.hpp>
+#include <thread>
 
 // Namespace of project.
 namespace walker {
 	
-	class Game;
-	
-	/* Checks for all critical dependencies of the game.
-	 * */
-	class Launcher {
-		public:
+	/* Updated after reading input.*/
+	struct INPUT_RECORD {
 
-			/* Adds a map object to the game. 
-			 *
-			 * @param a map object.
-			 * */
-			void add_map(const Map& map);
+		/* Move flag.
+		 * 0: no move input.
+		 * 1: up move input.
+		 * 2: right move input.
+		 * 3: down move input.
+		 * 4: left move input.
+		 * */
+		std::uint_fast8_t move;
 
-			/* Checks if everythink is ready for creating the game instance.
-			 *
-			 * If all dependencies has been added and none of the has
-			 * errors then signals that launcher is ready for creating the game.
-			 *
-			 * @return 0 if no error occured otherwise error code.
-			 * */
-			std::uint_least16_t is_ok();	
-	
-			/* Creates game object.
-			 *
-			 * If every critacal dependency has been added then function will
-			 * return a game object. Only one game object should be alive.
-			 *
-			 * @return true if game created successfully.
-			 * */	
-			Game create_game();
-	
-		private:
+		/* Interact flag.
+		 * true if recorded interact key.
+		 * */
+		bool interact;
 
-			// Ensures that only one game instance is created.
-			bool _game_created = false;
+		/* Special flags.
+		 * [0]: if 1 close app.
+		 * */
+		std::uint_fast8_t special[1];
 
 	};
 	
@@ -58,15 +47,20 @@ namespace walker {
 			 * */
 			bool step();
 
-			/* Polls input from user.
+			/* Starts polling the input from user.
 			 *
 			 * Must be called in thread otherwise will freeze the game.
+			 * Uses game interrupts to change game state.
 			 * */
-			void poll_input();
+			void start_poll_input();
+
+			/* Stops polling the input from user.
+			 * */
+			void stop_poll_input();
 
 			/* Checks if game should be closed.
 			 *
-			 * @return the state of the _should_run_flag.
+			 * @return the state of the _should_run flag.
 			 * */
 			bool should_run() const;
 	
@@ -78,14 +72,38 @@ namespace walker {
 			 * @return error code.
 			 * */
 			std::uint_least16_t poll_error();
-	
+
+			// Enables creation of game by launcher.
+			friend Launcher;
 				
 		private:
-			// Disable constructor.
-			Game();
 
-			// Flag that indicates if game should be closed.
-			bool _should_run_flag;
+			// Internal polling implementation.
+			void __poll_input();
+
+			// Hide constructor.
+			Game(Gmap * map) : _map(map) {};
+
+			// Flag indicates if game should be closed.
+			bool _should_run = true;
+
+			// GUARDED Flag indicates that polling is on.
+			bool _g_is_polling = false;
+
+			// Stores map.
+			Gmap * _map;
+
+			// Mutex for _g_is_polling flag.
+			std::mutex _m_ip;
+
+			// Mutex for _g_is_writing_input flag.
+			std::mutex _m_wi;
+
+			// Poll thread.
+			std::thread _poll_thread;
+
+			// Input struct.
+			struct INPUT_RECORD _g_input_record;
 
 	};
 }
