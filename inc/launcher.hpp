@@ -2,6 +2,7 @@
 #define __WALKER_LAUNCHER__
 
 #include <gmap.hpp>
+#include <escape-tui.hpp>
 
 namespace walker {
 
@@ -17,6 +18,18 @@ namespace walker {
 			 * @param a map object.
 			 * */
 			void add_map(Gmap * map);
+
+			/* Adds a virtual console to the game.
+			 *
+			 * @param a virtual console.
+			 * */
+			void add_vconsole(escape_tui::VConsole * console);
+
+			/* Adds a input recorder to the game.
+			 *
+			 * @param a input recorder.
+			 * */
+			void add_recorder(escape_tui::InputRecorder * recorder);
 
 			/* Checks if everythink is ready for creating the game instance.
 			 *
@@ -48,7 +61,14 @@ namespace walker {
 			// Stores map.
 			Gmap * _map = nullptr;
 
+			// Pointer to the created game.
 			Game * _game = nullptr;
+
+			// Input recorder.
+			escape_tui::InputRecorder * _recorder;
+
+			// Pointer to the virtual console.
+			escape_tui::VConsole * _console = nullptr;
 
 	};
 

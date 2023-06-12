@@ -6,38 +6,10 @@
 #include <gmap.hpp>
 #include <launcher.hpp>
 #include <thread>
+#include <escape-tui.hpp>
 
 // Namespace of project.
 namespace walker {
-	
-	/* Updated after reading input.*/
-	struct INPUT_RECORD {
-
-		/* Move flag.
-		 * 0: no move input.
-		 * 1: up move input.
-		 * 2: right move input.
-		 * 3: down move input.
-		 * 4: left move input.
-		 * */
-		std::uint_fast8_t move;
-
-		/* Interact flag.
-		 * true if recorded interact key.
-		 * */
-		bool interact;
-
-		/* Command accumulator.
-		 * Stores latest command.
-		 * */
-		char command[5];
-
-		/* Command flag.
-		 * Processes command in accumulator if true.
-		 * */
-		bool fcommand;
-
-	};
 	
 	/* Game class should act like compositor.
 	 * Provides interface for managing game entities.
@@ -52,22 +24,25 @@ namespace walker {
 			 * */
 			bool step();
 
-			/* Starts polling the input from user.
-			 *
-			 * Must be called in thread otherwise will freeze the game.
-			 * Uses game interrupts to change game state.
-			 * */
-			void start_poll_input();
-
-			/* Stops polling the input from user.
-			 * */
-			void stop_poll_input();
-
 			/* Checks if game should be closed.
 			 *
 			 * @return the state of the _should_run flag.
 			 * */
 			bool should_run() const;
+
+			/* Starts game.
+			 *
+			 * Starts polling input, clears terminal.
+			 * Only after starting the game you can start drawing on screen
+			 * and update game states.
+			 * */
+			void start();
+
+			/* Closes game.
+			 *
+			 * Calling this function without calling start() will do nothing.
+			 * */
+			void close();
 	
 			/* Returns error code.
 			 * 
@@ -78,41 +53,29 @@ namespace walker {
 			 * */
 			std::uint_least16_t poll_error();
 
-			/* Ensures all threads has stopped.
-			 * */
-			~Game();
-
 			// Enables creation of game by launcher.
 			friend Launcher;
 				
 		private:
 
-			// Internal polling implementation.
-			void __poll_input();
-
 			// Hide constructor.
-			Game(Gmap * map) : _map(map) {};
+			Game(Gmap * map, escape_tui::VConsole * console, escape_tui::InputRecorder * recorder) : _map(map), _console(console), _recorder(recorder) {};
 
 			// Flag indicates if game should be closed.
 			bool _should_run = true;
 
-			// GUARDED Flag indicates that polling is on.
-			bool _g_is_polling = false;
+			// Flag is true if game has been started.
+			bool _is_game_on = false;
 
 			// Stores map.
 			Gmap * _map;
 
-			// Mutex for _g_is_polling flag.
-			std::mutex _m_ip;
+			// Stores console.
+			escape_tui::VConsole * _console;
 
-			// Mutex for _g_is_writing_input flag.
-			std::mutex _m_wi;
+			// Stores recorder.
+			escape_tui::InputRecorder * _recorder;
 
-			// Poll thread.
-			std::thread _poll_thread;
-
-			// GUARDED input struct.
-			struct INPUT_RECORD _g_input_record;
 
 	};
 }

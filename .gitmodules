@@ -1,0 +1,3 @@
+[submodule "extern/escape-tui"]
+	path = extern/escape-tui
+	url = git@github.com:Challmymind/escape-tui.git

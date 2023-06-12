@@ -8,10 +8,20 @@ namespace walker {
 		_map = map;
 	}
 
+	void Launcher::add_vconsole(escape_tui::VConsole *console) {
+		_console = console;
+	}
+
+	void Launcher::add_recorder(escape_tui::InputRecorder *recorder) {
+		_recorder = recorder;
+	}
+
 	bool Launcher::is_ok() const{
 
 		// Check for all bad conditions.
 		if (_map == nullptr) return false;
+		if (_console == nullptr) return false;
+		if (_recorder == nullptr) return false;
 		return true;
 	}
 
@@ -27,7 +37,7 @@ namespace walker {
 		_game_created = true;
 
 		// Allocate memory.
-		_game = new Game(_map);
+		_game = new Game(_map, _console, _recorder);
 
 		return _game;
 
