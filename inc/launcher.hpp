@@ -2,6 +2,9 @@
 #define __WALKER_LAUNCHER__
 
 #include <gmap.hpp>
+#include <istate.hpp>
+#include <map>
+#include <vector>
 #include <escape-tui.hpp>
 
 namespace walker {
@@ -13,11 +16,42 @@ namespace walker {
 	class Launcher {
 		public:
 
+			/* Structure that stores link between
+			 * state argument and state.
+			 *
+			 * Used by functions that search for possible state switches.
+			 * */
+			struct STATELINK {
+
+				GameIState * state;
+				bool (*arg)();
+
+			};
+
 			/* Adds a map object to the game. 
 			 *
 			 * @param a map object.
 			 * */
 			void add_map(Gmap * map);
+
+			/* Adds state links to the launcher.
+			 *
+			 * It will ne passed to the created game.
+			 * This design has been chosen so the states can't
+			 * be edited on already running game.
+			 *
+			 * @param from - state from which change, arg - function that 
+			 * returns true if state could be switched and to - state to switch.
+			 * */
+			void add_link(GameIState * from, bool (*arg)(), GameIState * to);
+
+			/* Add starting state to the launcher.
+			 *
+			 * The game will start with this state.
+			 *
+			 * @param state that will be starting state.
+			 * */
+			void add_starting(GameIState * starting);
 
 			/* Adds a virtual console to the game.
 			 *
@@ -39,36 +73,28 @@ namespace walker {
 			 * @return true if no error occured.
 			 * */
 			bool is_ok() const;	
-	
-			/* Creates game object.
-			 *
-			 * If every critacal dependency has been added then function will
-			 * return a game object. Only one game object should be alive.
-			 *
-			 * @return true if game created successfully.
-			 * */	
-			Game * create_game();
 
-			/* Handles allocated momory.
-			 * */
-			~Launcher();
+			// Enables creation of game by launcher.
+			friend Game;
 	
 		private:
 
-			// Ensures that only one game instance is created.
-			bool _game_created = false;
-
 			// Stores map.
 			Gmap * _map = nullptr;
-
-			// Pointer to the created game.
-			Game * _game = nullptr;
 
 			// Input recorder.
 			escape_tui::InputRecorder * _recorder;
 
 			// Pointer to the virtual console.
 			escape_tui::VConsole * _console = nullptr;
+
+			// Stores structure of state and it's links.
+			// If the state it's running each step() game is searching if
+			// any state can be changed.
+			std::map<GameIState *, std::vector<struct STATELINK>> _state_links;
+			
+			// Starting state.
+			GameIState * _starting_state = nullptr;
 
 	};
 

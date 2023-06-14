@@ -2,11 +2,10 @@
 #define __WALKER_GAME__
 
 #include <cstdint>
-#include <mutex>
 #include <gmap.hpp>
 #include <launcher.hpp>
-#include <thread>
 #include <escape-tui.hpp>
+#include <istate.hpp>
 
 // Namespace of project.
 namespace walker {
@@ -53,13 +52,23 @@ namespace walker {
 			 * */
 			std::uint_least16_t poll_error();
 
-			// Enables creation of game by launcher.
-			friend Launcher;
+			/* Returns pointer to virtual screen.
+			 * */
+			escape_tui::VConsole * draw();
+			
+			/* Returns returned input by input recorder.
+			 *
+			 * This variable won't update until next step() call.
+			 * */
+			char get_input();
+
+			// Game contructor.
+			Game(Launcher * launcher);
 				
 		private:
 
-			// Hide constructor.
-			Game(Gmap * map, escape_tui::VConsole * console, escape_tui::InputRecorder * recorder) : _map(map), _console(console), _recorder(recorder) {};
+			// Most recent input.
+			char _recent_input;
 
 			// Flag indicates if game should be closed.
 			bool _should_run = true;
@@ -76,6 +85,13 @@ namespace walker {
 			// Stores recorder.
 			escape_tui::InputRecorder * _recorder;
 
+			// Stores structure of state and it's links.
+			// If the state it's running each step() game is searching if
+			// any state can be changed.
+			std::map<GameIState *, std::vector<Launcher::STATELINK>> _state_links;
+
+			// Current state.
+			GameIState * _current_state;
 
 	};
 }

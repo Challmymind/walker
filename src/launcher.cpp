@@ -22,31 +22,32 @@ namespace walker {
 		if (_map == nullptr) return false;
 		if (_console == nullptr) return false;
 		if (_recorder == nullptr) return false;
+		if (_starting_state == nullptr) return false;
 		return true;
 	}
 
-	Game * Launcher::create_game() {
 
-		// Critical error.
-		if (!is_ok()) std::exit(1);
+	void Launcher::add_link(GameIState *from, bool (*arg)(), GameIState *to) {
 
-		// Checks if game exists.
-		if (_game_created) return _game;
+		// Create temp state link.
+		struct STATELINK statelink;
 
-		// Switch flag before allocation.
-		_game_created = true;
+		// Add arg.
+		statelink.arg = arg;
 
-		// Allocate memory.
-		_game = new Game(_map, _console, _recorder);
-
-		return _game;
+		// Add state.
+		statelink.state = to;
+		
+		// Push state link.
+		_state_links[from].push_back(statelink);
 
 	}
 
-	Launcher::~Launcher() {
+	void Launcher::add_starting(GameIState *starting) {
 
-		// Dealloactes memory if allocated.
-		if (_game_created) delete _game;
+		// Switch starting state.
+		_starting_state = starting;
+		
 	}
 
 }
